@@ -112,7 +112,7 @@ func initConfig() {
 
 	// Defaults
 	if a.Address == "" {
-		a.Address = ":80"
+		a.Address = net.JoinHostPort("", port)
 	}
 	if a.Storm == nil {
 		a.Storm = &armor.Storm{

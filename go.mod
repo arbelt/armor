@@ -1,14 +1,17 @@
 module github.com/labstack/armor
 
 require (
-	github.com/Knetic/govaluate v3.0.0+incompatible
+	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/asdine/storm v2.1.2+incompatible
+	github.com/casbin/casbin v1.8.1
 	github.com/coreos/etcd v3.3.10+incompatible // indirect
 	github.com/coreos/go-semver v0.2.0 // indirect
 	github.com/docker/libkv v0.2.1
 	github.com/ghodss/yaml v1.0.0
+	github.com/go-cas/cas v2.1.0+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/hashicorp/go-immutable-radix v1.0.0 // indirect
 	github.com/hashicorp/go-msgpack v0.0.0-20150518234257-fa3f63826f7c // indirect
 	github.com/hashicorp/go-multierror v1.0.0 // indirect
@@ -33,5 +36,6 @@ require (
 	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4
 	go.etcd.io/bbolt v1.3.0 // indirect
 	golang.org/x/crypto v0.0.0-20181106171534-e4dc69e5b2fd
+	gopkg.in/cas.v2 v2.1.0
 	gopkg.in/resty.v1 v1.10.2 // indirect
 )

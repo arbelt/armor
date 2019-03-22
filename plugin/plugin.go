@@ -88,6 +88,8 @@ var (
 			p = &Static{Base: base}
 		case "file":
 			p = &File{Base: base}
+		case "cas":
+			p = &Cas{Base: base}
 		}
 		return
 	}
