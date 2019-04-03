@@ -19,7 +19,7 @@ type (
 
 	CasConfig struct {
 		URL string `json:"url" yaml:"url"`
-		CasbinCfg *CasbinConfig `yaml:"casbin"`
+		CasbinCfg CasbinConfig `yaml:"casbin"`
 	}
 
 	CasbinConfig struct {
@@ -58,7 +58,13 @@ type casbinMiddleware struct {
 func (cb *casbinMiddleware) MiddlewareFunc() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func (c echo.Context) error {
+			if cb.Enforcer == nil {
+				return echo.ErrForbidden
+			}
 			sub := cb.SubjectFunc(c)
+			if sub == "" {
+				return echo.ErrUnauthorized
+			}
 			if allow, _ := cb.Enforcer.EnforceSafe(sub, "*"); allow {
 				return next(c)
 			}
@@ -67,16 +73,12 @@ func (cb *casbinMiddleware) MiddlewareFunc() echo.MiddlewareFunc {
 	}
 }
 
-func newCasbinMiddleware(cfg *CasbinConfig) (*casbinMiddleware, error) {
-	if cfg == nil {
-		return nil, errors.New("no config")
-	}
+func newCasbinMiddleware(cfg CasbinConfig) (*casbinMiddleware, error) {
 	enforcer, err := cfg.Enforcer()
-	if err != nil {
+	if err != nil || enforcer == nil {
 		return nil, err
 	}
-	var sub func(echo.Context) string
-	sub = attrGetter(cfg.SubjectAttribute)
+	sub := attrGetter(cfg.SubjectAttribute)
 	return &casbinMiddleware{
 		Enforcer: enforcer,
 		SubjectFunc: sub,
@@ -139,9 +141,16 @@ func attrGetter(attr string) func(c echo.Context) string {
 	}
 }
 
+func internalErrorMid(_ echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return echo.ErrInternalServerError
+	}
+}
+
 func (r *Cas) Initialize() {
 	client, err := newCasClient(r.CasConfig)
 	if err != nil {
+		r.Middleware = internalErrorMid
 		return
 	}
 	casMid := newCasMiddleware(client)
