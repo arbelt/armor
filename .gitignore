@@ -7,3 +7,4 @@ _test
 .vscode
 .idea
 *.iml
+/build/

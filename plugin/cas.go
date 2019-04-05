@@ -44,7 +44,6 @@ func newCasClient(c CasConfig) (*cas.Client, error) {
 
 	return cas.NewClient(&cas.Options{
 		URL:         casURL,
-		SendService: true,
 	}), nil
 }
 
