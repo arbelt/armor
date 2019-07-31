@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/labstack/armor/util"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"github.com/labstack/tunnel-client"
 	tutil "github.com/labstack/tunnel-client/util"
@@ -43,13 +43,13 @@ func (a *Armor) NewHTTP() (h *HTTP) {
 		WriteTimeout: a.WriteTimeout * time.Second,
 	}
 	if a.TLS != nil {
+		_, a.TLS.Port, _ = net.SplitHostPort(a.TLS.Address)
 		e.TLSServer = &http.Server{
 			Addr:         a.TLS.Address,
-			TLSConfig:    new(tls.Config),
+			TLSConfig:    a.setupTLSConfig(),
 			ReadTimeout:  a.ReadTimeout * time.Second,
 			WriteTimeout: a.WriteTimeout * time.Second,
 		}
-		e.TLSServer.TLSConfig.GetConfigForClient = a.GetConfigForClient
 		e.AutoTLSManager.Email = a.TLS.Email
 		e.AutoTLSManager.Client = new(acme.Client)
 		if a.TLS.DirectoryURL != "" {
@@ -66,18 +66,6 @@ func (a *Armor) NewHTTP() (h *HTTP) {
 			})
 			return next(c)
 		}
-	})
-
-	// Route all requests
-	e.Any("/*", func(c echo.Context) (err error) {
-		req := c.Request()
-		res := c.Response()
-		host := a.FindHost(util.StripPort(req.Host), false)
-		if host == nil {
-			return echo.ErrNotFound
-		}
-		host.Echo.ServeHTTP(res, req)
-		return
 	})
 
 	return
@@ -102,8 +90,7 @@ func (h *HTTP) Start() error {
 		a.Colorer.Printf("⇨ serving from %s (Local)\n", a.Colorer.Green("http://localhost"+a.Address))
 		ip := util.PrivateIP()
 		if ip != "" {
-			_, port, _ := net.SplitHostPort(a.Address)
-			a.Colorer.Printf("⇨ serving from %s (Intranet)\n", a.Colorer.Green(fmt.Sprintf("http://%s:%s", ip, port)))
+			a.Colorer.Printf("⇨ serving from %s (Intranet)\n", a.Colorer.Green(fmt.Sprintf("http://%s:%s", ip, a.Port)))
 		}
 	} else {
 		a.Colorer.Printf("⇨ http server started on %s\n", a.Colorer.Green(a.Address))

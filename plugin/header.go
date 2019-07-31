@@ -1,6 +1,6 @@
 package plugin
 
-import "github.com/labstack/echo"
+import "github.com/labstack/echo/v4"
 
 // Add/remove HTTP response headers.
 
@@ -25,10 +25,6 @@ func (h *Header) Update(p Plugin) {
 	defer h.mutex.Unlock()
 	h.HeaderConfig = p.(*Header).HeaderConfig
 	h.Initialize()
-}
-
-func (*Header) Priority() int {
-	return 1
 }
 
 func (h *Header) Process(next echo.HandlerFunc) echo.HandlerFunc {

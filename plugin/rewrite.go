@@ -1,8 +1,8 @@
 package plugin
 
 import (
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type (
@@ -21,10 +21,6 @@ func (r *Rewrite) Update(p Plugin) {
 	defer r.mutex.Unlock()
 	r.RewriteConfig = p.(*Rewrite).RewriteConfig
 	r.Initialize()
-}
-
-func (*Rewrite) Priority() int {
-	return 1
 }
 
 func (r *Rewrite) Process(next echo.HandlerFunc) echo.HandlerFunc {

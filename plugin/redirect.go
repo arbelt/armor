@@ -1,17 +1,17 @@
 package plugin
 
 import (
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"net/http"
-
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
 )
 
 type (
 	RedirectConfig struct {
-		From string `yaml:"from"`
-		To   string `yaml:"to"`
-		Code int    `yaml:"code"`
+		template *Template
+		From     string `yaml:"from"`
+		To       string `yaml:"to"`
+		Code     int    `yaml:"code"`
 	}
 
 	Redirect struct {
@@ -46,18 +46,11 @@ type (
 )
 
 func (r *Redirect) Initialize() {
-	t := NewTemplate(r.To)
+	r.template = NewTemplate(r.To)
 	// Defaults
 	if r.Code == 0 {
 		r.Code = http.StatusMovedPermanently
 	}
-	r.Echo.GET(r.From, func(c echo.Context) error {
-		to, err := t.Execute(c)
-		if err != nil {
-			return err
-		}
-		return c.Redirect(r.Code, to)
-	})
 }
 
 func (r *Redirect) Update(p Plugin) {
@@ -67,14 +60,17 @@ func (r *Redirect) Update(p Plugin) {
 	r.Initialize()
 }
 
-func (*Redirect) Priority() int {
-	return -1
-}
-
 func (r *Redirect) Process(next echo.HandlerFunc) echo.HandlerFunc {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	return func(c echo.Context) error {
+		if c.Request().URL.Path == r.From {
+			to, err := r.template.Execute(c)
+			if err != nil {
+				return err
+			}
+			return c.Redirect(r.Code, to)
+		}
 		return next(c)
 	}
 }
@@ -88,10 +84,6 @@ func (r *HTTPSRedirect) Update(p Plugin) {
 	defer r.mutex.Unlock()
 	r.RedirectConfig = p.(*HTTPSRedirect).RedirectConfig
 	r.Initialize()
-}
-
-func (*HTTPSRedirect) Priority() int {
-	return -1
 }
 
 func (r *HTTPSRedirect) Process(next echo.HandlerFunc) echo.HandlerFunc {
@@ -109,10 +101,6 @@ func (r *HTTPSWWWRedirect) Update(p Plugin) {
 	defer r.mutex.Unlock()
 	r.RedirectConfig = p.(*HTTPSWWWRedirect).RedirectConfig
 	r.Initialize()
-}
-
-func (*HTTPSWWWRedirect) Priority() int {
-	return -1
 }
 
 func (r *HTTPSWWWRedirect) Process(next echo.HandlerFunc) echo.HandlerFunc {
@@ -140,10 +128,6 @@ func (r *HTTPSNonWWWRedirect) Update(p Plugin) {
 	r.Initialize()
 }
 
-func (*HTTPSNonWWWRedirect) Priority() int {
-	return -1
-}
-
 func (r *HTTPSNonWWWRedirect) Process(next echo.HandlerFunc) echo.HandlerFunc {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
@@ -161,10 +145,6 @@ func (r *WWWRedirect) Update(p Plugin) {
 	r.Initialize()
 }
 
-func (*WWWRedirect) Priority() int {
-	return -1
-}
-
 func (r *WWWRedirect) Process(next echo.HandlerFunc) echo.HandlerFunc {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
@@ -180,10 +160,6 @@ func (r *NonWWWRedirect) Update(p Plugin) {
 	defer r.mutex.Unlock()
 	r.RedirectConfig = p.(*NonWWWRedirect).RedirectConfig
 	r.Initialize()
-}
-
-func (*NonWWWRedirect) Priority() int {
-	return -1
 }
 
 func (r *NonWWWRedirect) Process(next echo.HandlerFunc) echo.HandlerFunc {

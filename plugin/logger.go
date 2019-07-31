@@ -1,8 +1,8 @@
 package plugin
 
 import (
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type (
@@ -21,10 +21,6 @@ func (l *Logger) Update(p Plugin) {
 	defer l.mutex.Unlock()
 	l.LoggerConfig = p.(*Logger).LoggerConfig
 	l.Initialize()
-}
-
-func (*Logger) Priority() int {
-	return -1
 }
 
 func (l *Logger) Process(next echo.HandlerFunc) echo.HandlerFunc {

@@ -1,8 +1,8 @@
 package plugin
 
 import (
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type (
@@ -21,10 +21,6 @@ func (g *Gzip) Update(p Plugin) {
 	defer g.mutex.Unlock()
 	g.GzipConfig = p.(*Gzip).GzipConfig
 	g.Initialize()
-}
-
-func (*Gzip) Priority() int {
-	return 1
 }
 
 func (g *Gzip) Process(next echo.HandlerFunc) echo.HandlerFunc {

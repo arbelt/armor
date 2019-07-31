@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/casbin/casbin"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"gopkg.in/cas.v2"
 	"net/url"
 	"strings"

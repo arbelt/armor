@@ -2,6 +2,7 @@ package armor
 
 import (
 	"crypto/tls"
+	"net"
 	"sync"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/labstack/armor/plugin"
 	"github.com/labstack/armor/store"
 	"github.com/labstack/armor/util"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/color"
 	"github.com/labstack/gommon/log"
 )
@@ -20,6 +21,7 @@ type (
 		mutex         sync.RWMutex
 		Name          string             `json:"name"`
 		Address       string             `json:"address"`
+		Port          string             `json:"-"`
 		TLS           *TLS               `json:"tls"`
 		Admin         *Admin             `json:"admin"`
 		Storm         *Storm             `json:"storm"`
@@ -40,12 +42,14 @@ type (
 
 	TLS struct {
 		Address      string `json:"address"`
+		Port         string `json:"-"`
 		CertFile     string `json:"cert_file"`
 		KeyFile      string `json:"key_file"`
 		Auto         bool   `json:"auto"`
 		CacheDir     string `json:"cache_dir"`
 		Email        string `json:"email"`
 		DirectoryURL string `json:"directory_url"`
+		Secured      bool   `json:"secured"`
 	}
 
 	Admin struct {
@@ -75,7 +79,7 @@ type (
 		RawPlugins  []plugin.RawPlugin `json:"plugins"`
 		Paths       Paths              `json:"paths"`
 		Plugins     []plugin.Plugin    `json:"-"`
-		Echo        *echo.Echo         `json:"-"`
+		Group       *echo.Group        `json:"-"`
 		ClientCAs   []string           `json:"client_ca"`
 		TLSConfig   *tls.Config        `json:"-"`
 	}
@@ -95,8 +99,23 @@ type (
 )
 
 const (
-	Version = "0.4.13"
+	Version = "0.4.14"
 	Website = "https://armor.labstack.com"
+)
+
+var (
+	prePlugins = map[string]bool{
+		plugin.PluginLogger:              true,
+		plugin.PluginRedirect:            true,
+		plugin.PluginHTTPSRedirect:       true,
+		plugin.PluginHTTPSWWWRedirect:    true,
+		plugin.PluginHTTPSNonWWWRedirect: true,
+		plugin.PluginWWWRedirect:         true,
+		plugin.PluginAddTrailingSlash:    true,
+		plugin.PluginRemoveTrailingSlash: true,
+		plugin.PluginNonWWWRedirect:      true,
+		plugin.PluginRewrite:             true,
+	}
 )
 
 func (a *Armor) FindHost(name string, add bool) (h *Host) {
@@ -117,10 +136,11 @@ func (a *Armor) FindHost(name string, add bool) (h *Host) {
 
 	// Initialize host
 	if !h.initialized {
-		h.Paths = make(Paths)
-		h.Echo = echo.New()
 		h.Name = name
-		h.Echo.Logger = a.Logger
+		h.Paths = make(Paths)
+		h.Group = a.Echo.Host(net.JoinHostPort(name, a.Port))
+		routers := a.Echo.Routers()
+		routers[net.JoinHostPort(name, a.TLS.Port)] = routers[name]
 		h.initialized = true
 	}
 
@@ -130,7 +150,7 @@ func (a *Armor) FindHost(name string, add bool) (h *Host) {
 func (a *Armor) AddPlugin(p plugin.Plugin) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
-	if p.Priority() < 0 {
+	if p.Order() < 0 {
 		a.Echo.Pre(p.Process)
 	} else {
 		a.Echo.Use(p.Process)
@@ -161,7 +181,7 @@ func (a *Armor) LoadPlugin(p *store.Plugin, update bool) {
 	} else if p.Host != "" && p.Path == "" {
 		// Host level
 		host := a.FindHost(p.Host, true)
-		p := plugin.Decode(p.Raw, host.Echo, a.Logger)
+		p := plugin.Decode(p.Raw, a.Echo, a.Logger)
 		p.Initialize()
 		if update {
 			host.UpdatePlugin(p)
@@ -172,7 +192,7 @@ func (a *Armor) LoadPlugin(p *store.Plugin, update bool) {
 		// Path level
 		host := a.FindHost(p.Host, true)
 		path := host.FindPath(p.Path)
-		p := plugin.Decode(p.Raw, host.Echo, a.Logger)
+		p := plugin.Decode(p.Raw, a.Echo, a.Logger)
 		p.Initialize()
 		if update {
 			path.UpdatePlugin(p)
@@ -222,14 +242,20 @@ func (a *Armor) SavePlugins() {
 	}
 
 	// Save
+	i, j := -50, 0
 	for _, p := range plugins {
 		p.Source = store.File
 		p.ID = util.ID()
 		now := time.Now()
 		p.CreatedAt = now
 		p.UpdatedAt = now
-
-		// Insert
+		if _, ok := prePlugins[p.Name]; ok {
+			i++
+			p.Order = i
+		} else {
+			j++
+			p.Order = j
+		}
 		if err := a.Store.AddPlugin(p); err != nil {
 			panic(err)
 		}
@@ -250,7 +276,7 @@ func (h *Host) FindPath(name string) (p *Path) {
 	// Initialize path
 	if !p.initialized {
 		p.Name = name
-		p.Group = h.Echo.Group(name)
+		p.Group = h.Group.Group(name)
 		p.initialized = true
 	}
 
@@ -260,11 +286,7 @@ func (h *Host) FindPath(name string) (p *Path) {
 func (h *Host) AddPlugin(p plugin.Plugin) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
-	if p.Priority() < 0 {
-		h.Echo.Pre(p.Process)
-	} else {
-		h.Echo.Use(p.Process)
-	}
+	h.Group.Use(p.Process)
 	h.Plugins = append(h.Plugins, p)
 }
 

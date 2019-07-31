@@ -1,8 +1,8 @@
 package plugin
 
 import (
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type (
@@ -21,10 +21,6 @@ func (b *BodyLimit) Update(p Plugin) {
 	defer b.mutex.Unlock()
 	b.BodyLimitConfig = p.(*BodyLimit).BodyLimitConfig
 	b.Initialize()
-}
-
-func (*BodyLimit) Priority() int {
-	return 1
 }
 
 func (b *BodyLimit) Process(next echo.HandlerFunc) echo.HandlerFunc {

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/labstack/armor/admin"
 	"io/ioutil"
 	stdLog "log"
 	"net"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/labstack/armor"
-	"github.com/labstack/armor/admin"
 	"github.com/labstack/armor/store"
 	"github.com/labstack/gommon/color"
 	"github.com/labstack/gommon/log"
@@ -114,6 +114,7 @@ func initConfig() {
 	if a.Address == "" {
 		a.Address = net.JoinHostPort("", port)
 	}
+	_, a.Port, _ = net.SplitHostPort(a.Address)
 	if a.Storm == nil {
 		a.Storm = &armor.Storm{
 			URI: filepath.Join(a.RootDir, "storm.db"),

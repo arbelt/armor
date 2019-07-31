@@ -1,8 +1,8 @@
 package plugin
 
 import (
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type (
@@ -21,10 +21,6 @@ func (s *Static) Update(p Plugin) {
 	defer s.mutex.Unlock()
 	s.StaticConfig = p.(*Static).StaticConfig
 	s.Initialize()
-}
-
-func (*Static) Priority() int {
-	return 1
 }
 
 func (s *Static) Process(next echo.HandlerFunc) echo.HandlerFunc {

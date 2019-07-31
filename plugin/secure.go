@@ -1,8 +1,8 @@
 package plugin
 
 import (
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type (
@@ -21,10 +21,6 @@ func (s *Secure) Update(p Plugin) {
 	defer s.mutex.Unlock()
 	s.SecureConfig = p.(*Secure).SecureConfig
 	s.Initialize()
-}
-
-func (*Secure) Priority() int {
-	return 1
 }
 
 func (s *Secure) Process(next echo.HandlerFunc) echo.HandlerFunc {

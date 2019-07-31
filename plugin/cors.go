@@ -1,8 +1,8 @@
 package plugin
 
 import (
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type (
@@ -14,10 +14,6 @@ type (
 
 func (c *CORS) Initialize() {
 	c.Middleware = middleware.CORSWithConfig(c.CORSConfig)
-}
-
-func (*CORS) Priority() int {
-	return 1
 }
 
 func (c *CORS) Update(p Plugin) {

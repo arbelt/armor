@@ -1,6 +1,6 @@
 package plugin
 
-import "github.com/labstack/echo"
+import "github.com/labstack/echo/v4"
 
 type (
 	FileConfig struct {
@@ -21,10 +21,6 @@ func (f *File) Update(p Plugin) {
 	defer f.mutex.Unlock()
 	f.FileConfig = p.(*File).FileConfig
 	f.Initialize()
-}
-
-func (*File) Priority() int {
-	return 1
 }
 
 func (f *File) Process(next echo.HandlerFunc) echo.HandlerFunc {

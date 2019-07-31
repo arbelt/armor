@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type (
@@ -62,10 +62,6 @@ func (p *Proxy) Update(plugin Plugin) {
 	defer p.mutex.Unlock()
 	p.ProxyConfig = plugin.(*Proxy).ProxyConfig
 	p.Initialize()
-}
-
-func (*Proxy) Priority() int {
-	return 1
 }
 
 func (p *Proxy) Process(next echo.HandlerFunc) echo.HandlerFunc {
